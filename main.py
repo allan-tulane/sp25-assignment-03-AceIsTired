@@ -7,7 +7,6 @@ test_cases = [('book', 'back'), ('kookaburra', 'kookybird'), ('elephant', 'relev
 alignments = [('b--ook', 'bac--k'), ('kook-ab-urr-a', 'kooky-bi-r-d-'), ('relev--ant','-ele-phant'), ('AAAGAATTCA', 'AAA---T-CA')]
 
 def MED(S, T):
-    # TO DO - modify to account for insertions, deletions and substitutions
     if (S == ""):
         return(len(T))
     elif (T == ""):
@@ -20,10 +19,58 @@ def MED(S, T):
 
 
 def fast_MED(S, T, MED={}):
-    # TODO -  implement top-down memoization
-    pass
+    if (S, T) in MED:
+        return MED[(S, T)]
 
-def fast_align_MED(S, T, MED={}):
-    # TODO - keep track of alignment
-    pass
+    if T == "":
+        return len(S)
+    if S == "":
+        return len(T)
 
+    elif S[0] == T[0]:
+        MED[(S, T)] = fast_MED(S[1:], T[1:], MED)
+    else:
+        MED[(S, T)] = 1 + min(fast_MED(S, T[1:], MED), fast_MED(S[1:], T, MED))
+
+    return MED[(S, T)]
+
+def fast_align_MED(S, T, MED={}): # I COULD NOT GET THIS TO WORK :(
+    if (S, T) in MED:
+        return MED[(S, T)]
+
+    if S == "":
+        result = ("-" * len(T), T)
+        MED[(S, T)] = result
+        return result
+
+    if T == "":
+        result = (S, "-" * len(S))
+        MED[(S, T)] = result
+        return result
+
+    if S[0] == T[0]:
+        align_S, align_T = fast_align_MED(S[1:], T[1:], MED)
+        result = (S[0] + align_S, T[0] + align_T)
+        MED[(S, T)] = result
+        return result
+
+
+    insert = fast_MED(S, T[1:])
+    delete = fast_MED(S[1:], T)
+    substitute = fast_MED(S[1:], T[1:])
+
+    min_cost = 1 + min(insert, delete, substitute)
+
+
+    if min_cost - 1 == substitute:
+        align_S, align_T = fast_align_MED(S[1:], T[1:], MED)
+        result = (S[0] + align_S, T[0] + align_T)
+    elif min_cost - 1 == delete:
+        align_S, align_T = fast_align_MED(S[1:], T, MED)
+        result = (S[0] + align_S, "-" + align_T)
+    else:
+        align_S, align_T = fast_align_MED(S, T[1:], MED)
+        result = ("-" + align_S, T[0] + align_T)
+
+    MED[(S, T)] = result
+    return result
